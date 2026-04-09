@@ -4,7 +4,13 @@
 
 No login. No setup. Just paste your resume + job description and go.
 
-🔗 **[Try JobCraft AI Live →](https://cvbuild-assist.netlify.app)**
+## How to use
+1. Clone or download this repo.
+2. Open html file directly in your browser.
+3. No server or install needed — runs fully in browser.
+4. Upload your resume (PDF).
+5. Paste the job description.
+6. Get your ATS-optimised resume, cover letter, and outreach message instantly in pdf format available for download. 
 
 ---
 
@@ -47,9 +53,7 @@ The best-scoring resume version is automatically selected based on ATS analysis.
 ## How to use
 
 1. Open the [live app](https://cvbuild-assist.netlify.app)
-2. Upload your resume (PDF)
-3. Paste the job description
-4. Get your ATS-optimised resume, cover letter, and outreach message instantly
+
 
 ---
 
