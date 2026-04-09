@@ -1,10 +1,10 @@
 # JobCraft AI 🚀
 
-**Generate ATS-optimised resume, cover letter, and outreach message in seconds.**
+**Generate ATS-optimised resumes, cover letters, and outreach messages in seconds.**
 
 No login. No setup. Just paste your resume + job description and go.
 
-🔗 **[Try JobCraft AI Live →]([https://cvbuild-assist.netlify.app/])**
+🔗 **[Try JobCraft AI Live →](https://jobcraft-ai.netlify.app)**
 
 ---
 
@@ -46,7 +46,7 @@ The best-scoring resume version is automatically selected based on ATS analysis.
 
 ## How to use
 
-1. Open the [live app](YOUR_NETLIFY_URL)
+1. Open the [live app](https://jobcraft-ai.netlify.app)
 2. Upload your resume (PDF)
 3. Paste the job description
 4. Get your ATS-optimised resume, cover letter, and outreach message instantly
@@ -57,4 +57,4 @@ The best-scoring resume version is automatically selected based on ATS analysis.
 
 **Mohan Kumar K (Gus)**  
 Senior Application Support Engineer → Platform / Infra Automation Engineer  
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-blue?style=flat&logo=linkedin)](https://linkedin.com/in/YOUR_LINKEDIN)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-blue?style=flat&logo=linkedin)](https://www.linkedin.com/in/mohan-kumar-krishnappa/)
