@@ -1,10 +1,10 @@
 # JobCraft AI 🚀
 
-**Generate ATS-optimised resumes, cover letters, and outreach messages in seconds.**
+**Generate ATS-optimised resume, cover letter, and outreach message in seconds.**
 
 No login. No setup. Just paste your resume + job description and go.
 
-🔗 **[Try JobCraft AI Live →](YOUR_NETLIFY_URL)**
+🔗 **[Try JobCraft AI Live →]([https://cvbuild-assist.netlify.app/])**
 
 ---
 
