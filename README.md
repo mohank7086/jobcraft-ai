@@ -46,14 +46,6 @@ The best-scoring resume version is automatically selected based on ATS analysis.
 - Python
 - Groq API (LLM)
 - pypdf (resume parsing)
-- Netlify (hosting)
-
----
-
-## How to use
-
-1. Open the [live app](https://cvbuild-assist.netlify.app)
-
 
 ---
 
