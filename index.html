@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>JobCraft AI</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg: #0a0a0f;
+  --surface: #13131a;
+  --surface2: #1c1c26;
+  --border: #2a2a3a;
+  --accent: #7c5cfc;
+  --accent2: #00e5c0;
+  --accent3: #ff6b6b;
+  --text: #e8e8f0;
+  --muted: #6b6b80;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Mono', monospace;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(124,92,252,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(124,92,252,0.04) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+  z-index: 0;
+}
+.glow { position: fixed; width: 600px; height: 600px; border-radius: 50%; filter: blur(120px); pointer-events: none; z-index: 0; }
+.glow-1 { background: rgba(124,92,252,0.12); top: -200px; right: -200px; }
+.glow-2 { background: rgba(0,229,192,0.06); bottom: -200px; left: -200px; }
+.wrap { position: relative; z-index: 1; max-width: 900px; margin: 0 auto; padding: 48px 24px; }
+
+/* Header */
+header { text-align: center; margin-bottom: 48px; animation: fadeDown 0.6s ease both; }
+.badge {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 100px; padding: 6px 16px;
+  font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
+  color: var(--accent2); margin-bottom: 12px;
+}
+.dot { width: 6px; height: 6px; background: var(--accent2); border-radius: 50%; animation: pulse 2s infinite; }
+.byline { font-size: 12px; color: var(--muted); margin-bottom: 12px; }
+.subtitle { color: var(--muted); font-size: 13px; line-height: 1.6; max-width: 500px; margin: 0 auto; }
+
+/* Cards */
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 24px; margin-bottom: 20px; }
+.card-label {
+  font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 14px; display: flex; align-items: center; gap: 8px;
+}
+.card-label::before { content: ''; width: 3px; height: 14px; background: var(--accent); border-radius: 2px; }
+
+/* Upload */
+.upload-box {
+  border: 2px dashed var(--border); border-radius: 12px;
+  padding: 40px 20px; text-align: center; cursor: pointer;
+  transition: all 0.2s; user-select: none; position: relative;
+}
+.upload-box:hover { border-color: var(--accent); background: rgba(124,92,252,0.05); }
+.upload-box.active { border-color: var(--accent2); background: rgba(0,229,192,0.06); }
+.upload-box.dragover { border-color: var(--accent); background: rgba(124,92,252,0.08); }
+.upload-icon { font-size: 36px; margin-bottom: 10px; }
+.upload-hint { font-size: 13px; color: var(--muted); }
+.upload-hint strong { color: var(--accent); }
+.file-selected { font-size: 12px; color: var(--accent2); margin-top: 10px; display: none; }
+.file-selected.show { display: block; }
+
+/* fetch-btn kept for API key card */
+.fetch-btn {
+  background: linear-gradient(135deg, var(--accent), #5a3fd8); border: none;
+  border-radius: 10px; color: #fff; font-family: 'Syne', sans-serif;
+  font-size: 12px; font-weight: 700; padding: 0 18px; cursor: pointer;
+  white-space: nowrap; transition: opacity 0.2s;
+}
+.fetch-btn:hover { opacity: 0.85; }
+
+/* Textarea */
+textarea {
+  width: 100%; background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 10px; color: var(--text); font-family: 'DM Mono', monospace;
+  font-size: 13px; padding: 12px 14px; outline: none; resize: vertical;
+  min-height: 140px; line-height: 1.6; transition: border-color 0.2s;
+}
+textarea:focus { border-color: var(--accent); }
+
+/* Selector chips */
+.selector-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.sel-chip {
+  flex: 1; min-width: 140px; padding: 14px 10px; text-align: center;
+  background: var(--surface2); border: 2px solid var(--border);
+  border-radius: 12px; cursor: pointer; font-family: 'Syne', sans-serif;
+  font-size: 13px; font-weight: 600; color: var(--muted);
+  transition: all 0.2s; user-select: none;
+}
+.sel-chip:hover { border-color: var(--accent); color: var(--text); }
+.sel-chip.active { border-color: var(--accent); background: rgba(124,92,252,0.12); color: var(--text); }
+
+/* Generate button */
+.gen-btn {
+  width: 100%; padding: 18px; background: linear-gradient(135deg, var(--accent), #5a3fd8);
+  border: none; border-radius: 14px; color: #fff; font-family: 'Syne', sans-serif;
+  font-size: 16px; font-weight: 700; letter-spacing: 1px; cursor: pointer;
+  transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 10px;
+  margin-bottom: 16px;
+}
+.gen-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 12px 40px rgba(124,92,252,0.4); }
+.gen-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+/* Error */
+.error-box {
+  display: none; background: rgba(255,107,107,0.1); border: 1px solid rgba(255,107,107,0.3);
+  border-radius: 12px; padding: 14px 18px; color: var(--accent3); font-size: 13px; margin-bottom: 16px;
+}
+.error-box.show { display: block; }
+
+/* Progress */
+.progress-wrap {
+  display: none; background: var(--surface); border: 1px solid var(--border);
+  border-radius: 16px; padding: 28px; text-align: center; margin-bottom: 16px;
+}
+.progress-wrap.show { display: block; }
+.progress-label { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 600; margin-bottom: 14px; color: var(--text); }
+.progress-track { background: var(--surface2); border: 1px solid var(--border); border-radius: 100px; height: 10px; overflow: hidden; margin-bottom: 8px; }
+.progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 100px; transition: width 0.5s ease; }
+.progress-pct { font-size: 11px; color: var(--accent2); text-align: right; }
+
+/* Results */
+.results { display: none; margin-top: 8px; }
+.results.show { display: block; }
+.results-header {
+  font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 700;
+  letter-spacing: 3px; text-transform: uppercase; color: var(--accent2);
+  text-align: center; margin-bottom: 20px;
+  display: flex; align-items: center; justify-content: center; gap: 12px;
+}
+.results-header::before { content:''; flex:1; height:1px; background: linear-gradient(90deg, transparent, var(--border)); }
+.results-header::after  { content:''; flex:1; height:1px; background: linear-gradient(90deg, var(--border), transparent); }
+
+/* Tabs */
+.tabs { display: flex; gap: 4px; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 4px; margin-bottom: 16px; }
+.tab { flex: 1; padding: 10px; background: transparent; border: none; border-radius: 10px; color: var(--muted); font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+.tab.active { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+.tab-pane { display: none; }
+.tab-pane.active { display: block; }
+
+/* Output card */
+.out-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
+.out-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; border-bottom: 1px solid var(--border); background: var(--surface2); }
+.out-title { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+.out-icon { width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+.ic-r { background: rgba(124,92,252,0.2); }
+.ic-c { background: rgba(0,229,192,0.2); }
+.ic-m { background: rgba(255,107,107,0.2); }
+.btn-row { display: flex; gap: 8px; }
+.act-btn { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; color: var(--muted); font-family: 'DM Mono', monospace; font-size: 11px; padding: 6px 12px; cursor: pointer; transition: all 0.2s; }
+.act-btn:hover { border-color: var(--accent); color: var(--text); }
+.act-btn.copied { border-color: var(--accent2); color: var(--accent2); }
+.out-body { padding: 24px; font-size: 13px; line-height: 1.8; color: var(--text); white-space: pre-wrap; }
+.out-body.html-mode { white-space: normal; }
+.out-body::-webkit-scrollbar { width: 4px; }
+.out-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+@keyframes fadeDown { from { opacity:0; transform:translateY(-20px); } to { opacity:1; transform:translateY(0); } }
+@keyframes pulse    { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
+</style>
+</head>
+<body>
+<div class="glow glow-1"></div>
+<div class="glow glow-2"></div>
+<div class="wrap">
+
+  <!-- Header -->
+  <header>
+    <div class="badge"><span class="dot"></span> AI-Powered Job Assistant</div>
+    <p class="byline">By Mohan Krishnappa</p>
+    <p class="subtitle">Upload your resume, paste a job description — get a tailored ATS-optimized resume, cover letter, and recruiter message instantly.</p>
+  </header>
+
+  <!-- API Key fallback -->
+  <div class="card" id="keyCard" style="display:none;visibility:hidden;">
+    <div class="card-label">Groq API Key</div>
+    <div style="display:flex;gap:10px;">
+      <input type="password" id="manualKey" placeholder="Paste your Groq API key (sk-...)..." style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:'DM Mono',monospace;font-size:13px;padding:11px 14px;outline:none;"/>
+      <button class="fetch-btn" onclick="applyManualKey()">✅ Use Key</button>
+    </div>
+    <p style="font-size:11px;color:var(--muted);margin-top:8px;">Get a free key at <a href="https://console.groq.com" target="_blank" style="color:var(--accent);">console.groq.com</a></p>
+  </div>
+
+  <!-- Resume Upload -->
+  <div class="card">
+    <div class="card-label">Your Resume</div>
+    <div class="upload-box" id="uploadBox" style="position:relative;">
+      <input type="file" id="resumeFile" accept=".pdf"
+        style="position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;z-index:10;"/>
+      <div class="upload-icon" id="uploadIcon">📄</div>
+      <div class="upload-hint" id="uploadHint"><strong>Click to upload</strong> or drag &amp; drop your resume PDF</div>
+    </div>
+    <div class="file-selected" id="fileSelected">✅ &nbsp;<span id="fileName"></span></div>
+  </div>
+
+  <!-- Job Description -->
+  <div class="card">
+    <div class="card-label">Job Description</div>
+    <textarea id="jobDesc" placeholder="Paste the full job description here..."></textarea>
+  </div>
+
+  <!-- What to Generate -->
+  <div class="card">
+    <div class="card-label">What do you need?</div>
+    <div class="selector-row">
+      <div class="sel-chip active" data-val="resume"    onclick="selectOutput(this)">📄 ATS Resume</div>
+      <div class="sel-chip"        data-val="cover"     onclick="selectOutput(this)">✉️ Cover Letter</div>
+      <div class="sel-chip"        data-val="recruiter" onclick="selectOutput(this)">💬 Recruiter Message</div>
+    </div>
+  </div>
+
+  <!-- Generate -->
+  <button class="gen-btn" id="genBtn" onclick="generate()">
+    <span>⚡</span><span id="genLabel">GENERATE ATS RESUME</span>
+  </button>
+
+  <div class="error-box" id="errorBox"></div>
+
+  <!-- Progress -->
+  <div class="progress-wrap" id="progressWrap">
+    <div class="progress-label" id="progressLabel">Starting up...</div>
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-pct" id="progressPct">0%</div>
+  </div>
+
+  <!-- Results -->
+  <div class="results" id="results">
+    <div class="results-header">Your Application Pack is Ready</div>
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab(0)">📄 ATS Resume</button>
+      <button class="tab"        onclick="switchTab(1)">✉️ Cover Letter</button>
+      <button class="tab"        onclick="switchTab(2)">💬 Recruiter Message</button>
+    </div>
+
+    <!-- Resume -->
+    <div class="tab-pane active" id="pane0">
+      <div class="out-card">
+        <div class="out-head">
+          <div class="out-title"><div class="out-icon ic-r">📄</div> ATS-Optimized Resume</div>
+          <div class="btn-row">
+            <button class="act-btn" onclick="copyOut('out0',this)">📋 Copy</button>
+            <button class="act-btn" onclick="dlPDF('out0','ATS_Resume')">⬇️ PDF</button>
+          </div>
+        </div>
+        <div class="out-body html-mode" id="out0"></div>
+      </div>
+    </div>
+
+    <!-- Cover Letter -->
+    <div class="tab-pane" id="pane1">
+      <div class="out-card">
+        <div class="out-head">
+          <div class="out-title"><div class="out-icon ic-c">✉️</div> Cover Letter</div>
+          <div class="btn-row">
+            <button class="act-btn" onclick="copyOut('out1',this)">📋 Copy</button>
+            <button class="act-btn" onclick="dlPDF('out1','Cover_Letter')">⬇️ PDF</button>
+          </div>
+        </div>
+        <div class="out-body" id="out1"></div>
+      </div>
+    </div>
+
+    <!-- Recruiter Message -->
+    <div class="tab-pane" id="pane2">
+      <div class="out-card">
+        <div class="out-head">
+          <div class="out-title"><div class="out-icon ic-m">💬</div> Recruiter Message</div>
+          <div class="btn-row">
+            <button class="act-btn" onclick="copyOut('out2',this)">📋 Copy</button>
+          </div>
+        </div>
+        <div class="out-body" id="out2"></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+<script>
+// ── Config ──
+let groqKey = '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';
+
+// ── File upload (init after DOM ready) ──
+let resumeInput, uploadBox, uploadIcon, uploadHint, fileSelected, fileName;
+
+document.addEventListener('DOMContentLoaded', () => {
+  resumeInput  = document.getElementById('resumeFile');
+  uploadBox    = document.getElementById('uploadBox');
+  uploadIcon   = document.getElementById('uploadIcon');
+  uploadHint   = document.getElementById('uploadHint');
+  fileSelected = document.getElementById('fileSelected');
+  fileName     = document.getElementById('fileName');
+
+  // Click anywhere on upload box → open file picker
+  // (handled natively by the full-cover invisible input overlay)
+
+  // File selected via picker
+  resumeInput.addEventListener('change', () => {
+    if (resumeInput.files.length > 0) markFileSelected(resumeInput.files[0]);
+  });
+
+  // Drag and drop
+  uploadBox.addEventListener('dragover',  e => { e.preventDefault(); uploadBox.classList.add('dragover'); });
+  uploadBox.addEventListener('dragleave', () => uploadBox.classList.remove('dragover'));
+  uploadBox.addEventListener('drop', e => {
+    e.preventDefault();
+    uploadBox.classList.remove('dragover');
+    const f = e.dataTransfer.files[0];
+    if (f && f.type === 'application/pdf') {
+      const dt = new DataTransfer();
+      dt.items.add(f);
+      resumeInput.files = dt.files;
+      markFileSelected(f);
+    } else {
+      showErr('Please drop a PDF file.');
+    }
+  });
+});
+
+function markFileSelected(f) {
+  fileName.textContent = f.name;
+  fileSelected.classList.add('show');
+  uploadIcon.textContent = '✅';
+  uploadHint.innerHTML   = '<strong>' + f.name + '</strong> — ready!';
+  uploadBox.classList.add('active');
+}
+
+// ── Output Selector ──
+let selectedOutput = 'resume';
+const genLabels = { resume: 'GENERATE ATS RESUME', cover: 'GENERATE COVER LETTER', recruiter: 'GENERATE RECRUITER MESSAGE' };
+
+function selectOutput(el) {
+  document.querySelectorAll('.sel-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  selectedOutput = el.dataset.val;
+  document.getElementById('genLabel').textContent = genLabels[selectedOutput];
+}
+
+// ── Progress ──
+function setProgress(pct, label) {
+  document.getElementById('progressFill').style.width  = pct + '%';
+  document.getElementById('progressPct').textContent   = pct + '%';
+  document.getElementById('progressLabel').textContent = label;
+}
+
+// ── Tabs ──
+function switchTab(i) {
+  document.querySelectorAll('.tab').forEach((t,j)  => t.classList.toggle('active', i===j));
+  document.querySelectorAll('.tab-pane').forEach((p,j) => p.classList.toggle('active', i===j));
+}
+
+// ── Copy ──
+function copyOut(id, btn) {
+  const el = document.getElementById(id);
+  const text = el.innerText || el.textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = '✅ Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = '📋 Copy'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+// ── PDF Download ──
+async function dlPDF(id, defaultFilename) {
+  // Build filename as name_role format
+  let filename = defaultFilename;
+  if (id === 'out0') {
+    try {
+      const el   = document.getElementById('out0');
+      const name = el.querySelector('h1')?.innerText?.trim().replace(/\s+/g,'_') || '';
+      const role = el.querySelector('em, i')?.innerText?.trim().replace(/\s+/g,'_') || '';
+      if (name && role) filename = name + '_' + role;
+      else if (name)    filename = name + '_Resume';
+    } catch(e) {}
+  }
+  const el = document.getElementById(id);
+  if (!el) return;
+  const origMax  = el.style.maxHeight;
+  const origOver = el.style.overflow;
+  el.style.maxHeight = 'none';
+  el.style.overflow  = 'visible';
+  const canvas = await html2canvas(el, { scale: 1.5, backgroundColor: '#ffffff', useCORS: true });
+  el.style.maxHeight = origMax;
+  el.style.overflow  = origOver;
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'px', format: [canvas.width, canvas.height], hotfixes: ['px_scaling'] });
+  // Use JPEG with compression to keep PDF under 5MB
+    const imgData = canvas.toDataURL('image/jpeg', 0.85);
+    doc.addImage(imgData, 'JPEG', 0, 0, canvas.width, canvas.height);
+  doc.save(filename + '.pdf');
+}
+
+// ── Error ──
+function showErr(msg) {
+  const el = document.getElementById('errorBox');
+  el.textContent = '⚠️ ' + msg;
+  el.classList.add('show');
+}
+function hideErr() { document.getElementById('errorBox').classList.remove('show'); }
+
+// ── Extract PDF Text ──
+async function extractPDF(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = async e => {
+      try {
+        // pdfjsLib is exposed as window.pdfjsLib by the CDN build
+        const lib = window.pdfjsLib || window['pdfjs-dist/build/pdf'];
+        if (!lib) { reject(new Error('PDF library not ready. Refresh and try again.')); return; }
+        lib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        const pdf = await lib.getDocument({ data: new Uint8Array(e.target.result) }).promise;
+        let text = '';
+        for (let i = 1; i <= pdf.numPages; i++) {
+          const page = await pdf.getPage(i);
+          const tc   = await page.getTextContent();
+          text += tc.items.map(x => x.str).join(' ') + '\n';
+        }
+        if (!text.trim()) reject(new Error('No text found in PDF. Make sure it is not a scanned image.'));
+        else resolve(text.trim());
+      } catch(err) { reject(new Error('PDF error: ' + err.message)); }
+    };
+    reader.onerror = () => reject(new Error('Could not read file.'));
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+// ── Main Generate ──
+async function generate() {
+  hideErr();
+  const file    = resumeInput.files[0];
+  const jobDesc = document.getElementById('jobDesc').value.trim();
+
+  if (!groqKey)  { showErr('Still loading. Please wait a moment.'); return; }
+  if (!file)     { showErr('Please upload your resume PDF first.'); return; }
+  if (!jobDesc)  { showErr('Please paste a job description or fetch from URL.'); return; }
+
+  const btn      = document.getElementById('genBtn');
+  const progress = document.getElementById('progressWrap');
+  const results  = document.getElementById('results');
+
+  btn.disabled = true;
+  progress.classList.add('show');
+  results.classList.remove('show');
+  setProgress(0, 'Starting up...');
+
+  try {
+    setProgress(10, 'Reading your resume PDF...');
+    const pdfText = await extractPDF(file);
+
+    setProgress(30, 'Analyzing job description...');
+    await delay(300);
+    setProgress(50, 'Tailoring to JD keywords...');
+    await delay(300);
+
+    // Per-output prompts — smaller = fewer tokens
+    const prompts = {
+      resume: {
+        system: `You are an elite ATS resume writer. Output ONLY raw HTML with inline styles — no markdown fences, no explanation, no preamble.
+
+YOUR PRIME DIRECTIVE: Mirror the input resume's exact section order, section names, and layout structure. Do NOT invent a new template. Reconstruct the same resume — only the content (bullets, summary, skills order) changes.
+
+WHAT YOU MUST PRESERVE (character-for-character):
+- Full name, phone, email, LinkedIn URL exactly as written
+- Every company name, job title, and employment date — no merging, no skipping
+- All education details, all certifications exactly as listed
+- Location: output ONLY "Bengaluru" — no state, pin, or full address
+- Section names and their order exactly as they appear in the input
+
+WHAT YOU CHANGE (content only):
+1. Professional Summary: add or rewrite as 3 sentences tailored to the JD using its keywords
+2. Each job bullet: rewrite in STAR format with strong action verbs and JD keywords — keep all existing bullets, minimum 2 per role, never fabricate achievements
+3. Skills: reorder to front-load JD-matching keywords, keep all existing skills and their categories unchanged
+
+HTML FORMATTING (apply to all sections):
+- Outer wrapper: <div style="font-family:Arial,sans-serif;font-size:11pt;color:#000;max-width:750px;margin:0 auto;padding:20px;line-height:1.6;background:#fff;">
+- Header block: centered, name in <h1 style="font-size:20pt;font-weight:bold;margin:0 0 4px 0;">, contact on next line in <p style="margin:0;font-size:10pt;">
+- Section headings: <h2 style="font-size:11pt;font-weight:bold;text-transform:uppercase;border-bottom:2px solid #000;padding-bottom:2px;margin-top:16px;margin-bottom:6px;">
+- Company + date row: <div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:10px;"> with company in <strong style="font-size:11pt;"> and date in <span style="font-size:10pt;color:#444;">
+- Job title: <div style="font-style:italic;margin-bottom:6px;font-size:10.5pt;">
+- Bullets: <ul style="margin:0 0 14px 0;padding-left:20px;"> with <li style="margin-bottom:4px;">
+- Skills lines: <p style="margin:2px 0;"><strong>[Category]:</strong> [list]</p>`,
+        user: (resume, jd) => `RESUME (full text from PDF — preserve its exact section order and all content):
+${resume}
+
+JOB DESCRIPTION:
+${jd}`,
+        render: (text) => {
+          // Strip any accidental markdown fences
+          let clean = text.trim();
+          if (clean.startsWith('```')) clean = clean.replace(/^```[a-z]*\n?/i, '');
+          if (clean.endsWith('```')) clean = clean.replace(/```$/, '');
+          clean = clean.trim();
+          document.getElementById('out0').innerHTML = clean.substring(0, 20000);
+          showOnlyTab(0);
+        }
+      },
+      cover: {
+        system: `You are a career strategist. Write a cover letter only — no explanation, no subject line.
+
+Extract from resume: full name, phone, email. Extract from JD: company name, exact job title.
+Format:
+[Name] | [Phone] | [Email]
+Hiring Manager, [Company]
+
+Para 1 (2-3 lines): Why THIS role at THIS company — specific, direct.
+Para 2 (3-4 lines): One real achievement as a mini story with numbers.
+Para 3 (2-3 lines): Two JD skills matched to two resume experiences.
+Para 4 (2 lines): Genuine close, ask for a conversation.
+
+Warm regards,
+[Name]
+
+MAX 350 words. No "I am writing to express", no "leverage", no "passionate". Sound like a confident human.`,
+        user: (resume, jd) => `RESUME:
+${resume}
+
+JD:
+${jd}`,
+        render: (text) => { document.getElementById('out1').textContent = text.substring(0, 5000); showOnlyTab(1); }
+      },
+      recruiter: {
+        system: `You are a career coach. Write a recruiter outreach message only — no explanation.
+
+Extract from resume: full name, phone, email. Extract from JD: company name, exact job title.
+Max 80 words. Include: name, job title, company, one specific achievement with a number, phone, email, one clear ask.
+Tone: confident, direct. No emojis. No "Hope this finds you well." No filler.`,
+        user: (resume, jd) => `RESUME:
+${resume}
+
+JD:
+${jd}`,
+        render: (text) => { document.getElementById('out2').textContent = text.substring(0, 1000); showOnlyTab(2); }
+      }
+    };
+
+    const cfg = prompts[selectedOutput];
+    const safeResumeTxt = pdfText.substring(0, 6000);  // enough for 2-page PDFs
+    const safeJD        = jobDesc.substring(0, 2500);
+
+    setProgress(65, 'Calling AI...');
+
+    let fullText = '';
+    try {
+      // Use Anthropic API via claude.ai proxy
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 5000,
+          system: cfg.system,
+          messages: [{ role: 'user', content: cfg.user(safeResumeTxt, safeJD) }]
+        })
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err?.error?.message || 'API error ' + res.status);
+      }
+      const data = await res.json();
+      fullText = data?.content?.[0]?.text || '';
+    } catch (fetchErr) {
+      // Fallback to Groq if Anthropic fails
+      if (!groqKey) throw fetchErr;
+      const res2 = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + groqKey },
+        body: JSON.stringify({
+          model: 'llama-3.3-70b-versatile',
+          messages: [
+            { role: 'system', content: cfg.system },
+            { role: 'user',   content: cfg.user(safeResumeTxt, safeJD) }
+          ],
+          temperature: 0.7,
+          max_tokens: 5000
+        })
+      });
+      if (!res2.ok) {
+        const err2 = await res2.json().catch(() => ({}));
+        throw new Error(err2?.error?.message || 'API error ' + res2.status);
+      }
+      const data2 = await res2.json();
+      fullText = data2?.choices?.[0]?.message?.content || '';
+    }
+
+    if (!fullText) throw new Error('No response from AI. Please try again.');
+
+    setProgress(85, 'Finishing up...');
+
+    setProgress(95, 'Rendering output...');
+    await delay(300);
+
+    cfg.render(fullText);
+
+    setProgress(100, '✅ Done!');
+    await delay(500);
+
+    progress.classList.remove('show');
+    results.classList.add('show');
+    results.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  } catch(err) {
+    progress.classList.remove('show');
+    showErr(err.message);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function showOnlyTab(i) {
+  document.querySelectorAll('.tab').forEach((t,j)  => t.classList.toggle('active', i===j));
+  document.querySelectorAll('.tab-pane').forEach((p,j) => p.classList.toggle('active', i===j));
+}
+
+function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+</script>
+</body>
+</html>
